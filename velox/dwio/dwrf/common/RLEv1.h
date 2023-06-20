@@ -310,7 +310,8 @@ class RleDecoderV1 : public dwio::common::IntDecoder<isSigned> {
           toSkip = visitor.process(value, atEnd);
           value += delta;
         } else {
-          value = dwio::common::IntDecoder<isSigned>::readLong();
+          value =
+              dwio::common::IntDecoder<isSigned>::template readInt<int64_t>();
           toSkip = visitor.process(value, atEnd);
         }
         --remainingValues;
@@ -503,7 +504,7 @@ class RleDecoderV1 : public dwio::common::IntDecoder<isSigned> {
       remainingValues = static_cast<uint64_t>(ch) + RLE_MINIMUM_REPEAT;
       repeating = true;
       delta = dwio::common::IntDecoder<isSigned>::readByte();
-      value = dwio::common::IntDecoder<isSigned>::readLong();
+      value = dwio::common::IntDecoder<isSigned>::template readInt<int64_t>();
     }
   }
 

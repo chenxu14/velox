@@ -30,6 +30,9 @@
 
 namespace facebook {
 
+using int128_t = __int128_t;
+using uint128_t = __uint128_t;
+
 // Variable-length integer encoding, using a little-endian, base-128
 // representation.
 // The MSb is set on all bytes except the last.
@@ -273,8 +276,9 @@ class ZigZag {
     return (static_cast<uint64_t>(val) << 1) ^ (val >> 63);
   }
 
-  static int64_t decode(uint64_t val) {
-    return static_cast<int64_t>((val >> 1) ^ -(val & 1));
+  template <typename U, typename T = typename std::make_signed<U>::type>
+  static T decode(U val) {
+    return static_cast<T>((val >> 1) ^ -(val & 1));
   }
 };
 

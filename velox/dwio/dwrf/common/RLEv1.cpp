@@ -107,6 +107,10 @@ void RleDecoderV1<isSigned>::next(
     int64_t* const data,
     const uint64_t numValues,
     const uint64_t* const nulls) {
+#ifdef VELOX_ENABLE_TRACE
+  velox::common::testutil::StopWatch stopWatch(
+      velox::common::testutil::LatencyType::DECODE);
+#endif
   uint64_t position = 0;
   // skipNulls()
   if (nulls) {

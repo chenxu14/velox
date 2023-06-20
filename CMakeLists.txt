@@ -75,7 +75,10 @@ option(VELOX_ENABLE_BENCHMARKS "Enable Velox top level benchmarks." OFF)
 option(VELOX_ENABLE_BENCHMARKS_BASIC "Enable Velox basic benchmarks." OFF)
 option(VELOX_ENABLE_S3 "Build S3 Connector" OFF)
 option(VELOX_ENABLE_GCS "Build GCS Connector" OFF)
+option(VELOX_ENABLE_VERIFY "Build ORC Vertify Tool" OFF)
 option(VELOX_ENABLE_HDFS "Build Hdfs Connector" OFF)
+option(VELOX_ENABLE_TRACE "Enable Scan ORC Trace" OFF)
+option(VELOX_ENABLE_ISAL "Enable Intel ISAL optimizations" OFF)
 option(VELOX_ENABLE_PARQUET "Enable Parquet support" OFF)
 option(VELOX_ENABLE_ARROW "Enable Arrow support" OFF)
 option(VELOX_ENABLE_REMOTE_FUNCTIONS "Enable remote function support" OFF)
@@ -198,12 +201,31 @@ if(VELOX_ENABLE_GCS)
   add_definitions(-DVELOX_ENABLE_GCS)
 endif()
 
+if(VELOX_ENABLE_VERIFY)
+  set(VELOX_ENABLE_HDFS ON)
+  INCLUDE_DIRECTORIES("/data4/chenxu14/ORC-1.5.13-Linux/include")
+endif()
+
 if(VELOX_ENABLE_HDFS)
+  INCLUDE_DIRECTORIES("/data4/chenxu14/libhdfs3")
   find_library(
     LIBHDFS3
     NAMES libhdfs3.so libhdfs3.dylib
-    HINTS "${CMAKE_SOURCE_DIR}/hawq/depends/libhdfs3/_build/src/" REQUIRED)
+    HINTS "/data4/chenxu14/libhdfs3/" REQUIRED)
   add_definitions(-DVELOX_ENABLE_HDFS3)
+endif()
+
+if(VELOX_ENABLE_ISAL)
+  INCLUDE_DIRECTORIES("/data4/chenxu14/isa-l/include")
+  find_library(
+    LIBISAL
+    NAMES libisal.so
+    HINTS "/data4/chenxu14/isa-l/bin" REQUIRED)
+  add_definitions(-DVELOX_ENABLE_ISAL)
+endif()
+
+if(VELOX_ENABLE_TRACE)
+  add_definitions(-DVELOX_ENABLE_TRACE)
 endif()
 
 if(VELOX_ENABLE_PARQUET)
@@ -495,14 +517,17 @@ include_directories(SYSTEM velox/external/duckdb/tpch/dbgen/include)
 
 # these were previously vendored in third-party/
 if(NOT VELOX_DISABLE_GOOGLETEST)
-  set(gtest_SOURCE BUNDLED)
-  resolve_dependency(gtest)
-  set(VELOX_GTEST_INCUDE_DIR
-      "${gtest_SOURCE_DIR}/googletest/include"
-      PARENT_SCOPE)
+  set_source(GTest)
+  resolve_dependency(GTest)
+  foreach(tgt gtest gtest_main gmock gmock_main)
+      if (NOT TARGET ${tgt} AND TARGET GTest::${tgt})
+          add_library(${tgt} INTERFACE IMPORTED)
+          target_link_libraries(${tgt} INTERFACE GTest::${tgt})
+      endif() 
+  endforeach(tgt)
 endif()
 
-set(xsimd_SOURCE BUNDLED)
+set_source(xsimd)
 resolve_dependency(xsimd)
 
 include(CTest) # include after project() but before add_subdirectory()

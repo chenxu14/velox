@@ -36,15 +36,19 @@ static const std::string kDuckDbTimestampWarning =
 template <TypeKind kind>
 ::duckdb::Value duckValueAt(const VectorPtr& vector, vector_size_t index) {
   using T = typename KindToFlatVector<kind>::WrapperType;
-  return ::duckdb::Value(vector->as<SimpleVector<T>>()->valueAt(index));
+  const VectorPtr& targetVec = vector->isLazy() ?
+      vector->as<LazyVector>()->loadedVectorShared() : vector;
+  return ::duckdb::Value(targetVec->as<SimpleVector<T>>()->valueAt(index));
 }
 
 template <>
 ::duckdb::Value duckValueAt<TypeKind::VARCHAR>(
     const VectorPtr& vector,
     vector_size_t index) {
+  const VectorPtr& targetVec = vector->isLazy() ?
+      vector->as<LazyVector>()->loadedVectorShared() : vector;
   // DuckDB requires zero-ending string
-  auto copy = vector->as<SimpleVector<StringView>>()->valueAt(index).str();
+  std::string copy = targetVec->as<SimpleVector<StringView>>()->valueAt(index).str();
   return ::duckdb::Value(copy);
 }
 
@@ -53,8 +57,10 @@ template <>
     const VectorPtr& vector,
     vector_size_t index) {
   using T = typename KindToFlatVector<TypeKind::TIMESTAMP>::WrapperType;
-  return ::duckdb::Value::TIMESTAMP(
-      veloxTimestampToDuckDB(vector->as<SimpleVector<T>>()->valueAt(index)));
+  const VectorPtr& targetVec = vector->isLazy() ?
+      vector->as<LazyVector>()->loadedVectorShared() : vector;
+  Timestamp timestamp = targetVec->as<SimpleVector<T>>()->valueAt(index);
+  return ::duckdb::Value::TIMESTAMP(veloxTimestampToDuckDB(timestamp));
 }
 
 template <>
@@ -62,15 +68,17 @@ template <>
     const VectorPtr& vector,
     vector_size_t index) {
   using T = typename KindToFlatVector<TypeKind::BIGINT>::WrapperType;
-  auto type = vector->type();
+  const VectorPtr& targetVec = vector->isLazy() ?
+      vector->as<LazyVector>()->loadedVectorShared() : vector;
+  auto type = targetVec->type();
   if (type->isShortDecimal()) {
     const auto& decimalType = type->asShortDecimal();
     return ::duckdb::Value::DECIMAL(
-        vector->as<SimpleVector<T>>()->valueAt(index),
+        targetVec->as<SimpleVector<T>>()->valueAt(index),
         decimalType.precision(),
         decimalType.scale());
   }
-  return ::duckdb::Value(vector->as<SimpleVector<T>>()->valueAt(index));
+  return ::duckdb::Value(targetVec->as<SimpleVector<T>>()->valueAt(index));
 }
 
 template <>
@@ -78,8 +86,10 @@ template <>
     const VectorPtr& vector,
     vector_size_t index) {
   using T = typename KindToFlatVector<TypeKind::HUGEINT>::WrapperType;
-  auto type = vector->type()->asLongDecimal();
-  auto val = vector->as<SimpleVector<T>>()->valueAt(index);
+  const VectorPtr& targetVec = vector->isLazy() ?
+      vector->as<LazyVector>()->loadedVectorShared() : vector;
+  auto type = targetVec->type()->asLongDecimal();
+  auto val = targetVec->as<SimpleVector<T>>()->valueAt(index);
   auto duckVal = ::duckdb::hugeint_t();
   duckVal.lower = (val << 64) >> 64;
   duckVal.upper = (val >> 64);

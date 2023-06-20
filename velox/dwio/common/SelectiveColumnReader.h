@@ -18,6 +18,7 @@
 #include "velox/common/base/RawVector.h"
 #include "velox/common/memory/Memory.h"
 #include "velox/common/process/ProcessBase.h"
+#include "velox/common/testutil/Latency.h"
 #include "velox/dwio/common/ColumnSelector.h"
 #include "velox/dwio/common/FormatData.h"
 #include "velox/dwio/common/IntDecoder.h"
@@ -515,6 +516,10 @@ class SelectiveColumnReader {
   void decodeWithVisitor(
       IntDecoder<Decoder::kIsSigned>* intDecoder,
       ColumnVisitor& visitor) {
+#ifdef VELOX_ENABLE_TRACE
+    velox::common::testutil::StopWatch stopWatch(
+        velox::common::testutil::LatencyType::DECODE);
+#endif
     auto decoder = dynamic_cast<Decoder*>(intDecoder);
     VELOX_CHECK(
         decoder,

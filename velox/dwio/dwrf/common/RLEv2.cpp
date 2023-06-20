@@ -194,6 +194,10 @@ void RleDecoderV2<isSigned>::next(
     int64_t* const data,
     const uint64_t numValues,
     const uint64_t* const nulls) {
+#ifdef VELOX_ENABLE_TRACE
+  velox::common::testutil::StopWatch stopWatch(
+      velox::common::testutil::LatencyType::DECODE);
+#endif
   uint64_t nRead = 0;
 
   while (nRead < numValues) {
@@ -258,7 +262,7 @@ uint64_t RleDecoderV2<isSigned>::nextShortRepeats(
     firstValue = readLongBE(byteSize);
 
     if (isSigned) {
-      firstValue = ZigZag::decode(static_cast<uint64_t>(firstValue));
+      firstValue = ZigZag::decode<uint64_t>(static_cast<uint64_t>(firstValue));
     }
   }
 
@@ -319,12 +323,13 @@ uint64_t RleDecoderV2<isSigned>::nextDirect(
     if (nulls) {
       for (uint64_t pos = offset; pos < offset + nRead; ++pos) {
         if (!bits::isBitNull(nulls, pos)) {
-          data[pos] = ZigZag::decode(static_cast<uint64_t>(data[pos]));
+          data[pos] =
+              ZigZag::decode<uint64_t>(static_cast<uint64_t>(data[pos]));
         }
       }
     } else {
       for (uint64_t pos = offset; pos < offset + nRead; ++pos) {
-        data[pos] = ZigZag::decode(static_cast<uint64_t>(data[pos]));
+        data[pos] = ZigZag::decode<uint64_t>(static_cast<uint64_t>(data[pos]));
       }
     }
   }

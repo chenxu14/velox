@@ -475,6 +475,9 @@ std::optional<size_t> DwrfRowReader::estimatedRowSizeHelper(
     case TypeKind::BIGINT: {
       return valueCount * sizeof(uint64_t);
     }
+    case TypeKind::HUGEINT: {
+      return valueCount * sizeof(uint128_t);
+    }
     case TypeKind::REAL: {
       return valueCount * sizeof(float);
     }
@@ -798,6 +801,14 @@ void registerDwrfReaderFactory() {
 
 void unregisterDwrfReaderFactory() {
   dwio::common::unregisterReaderFactory(dwio::common::FileFormat::DWRF);
+}
+
+void registerOrcReaderFactory() {
+  dwio::common::registerReaderFactory(std::make_shared<OrcReaderFactory>());
+}
+
+void unregisterOrcReaderFactory() {
+  dwio::common::unregisterReaderFactory(dwio::common::FileFormat::ORC);
 }
 
 } // namespace facebook::velox::dwrf

@@ -173,10 +173,11 @@ class DictionaryVector : public SimpleVector<T> {
       return "null";
     }
     auto inner = rawIndices_[index];
-    std::stringstream out;
-    out << "[" << index << "->" << inner << "] "
-        << dictionaryValues_->toString(inner);
-    return out.str();
+    // std::stringstream out;
+    // out << "[" << index << "->" << inner << "] "
+    //     << dictionaryValues_->toString(inner);
+    // return out.str();
+    return dictionaryValues_->toString(inner);
   }
 
   void setDictionaryValues(VectorPtr dictionaryValues) {

@@ -36,6 +36,17 @@ target_link_libraries(velox_example_opaque_type velox_type velox_vector
 # velox_exec velox_exec_test_lib velox_hive_connector velox_memory
 # velox_vector_test_lib)
 
+add_executable(velox_example_orc_local_query OrcLocalQuery.cpp)
+target_link_libraries(
+  velox_example_orc_local_query
+  velox_type
+  velox_vector
+  velox_exec
+  velox_exec_test_lib
+  velox_hive_connector
+  velox_memory
+  velox_vector_test_lib)
+
 add_executable(velox_example_scan_orc ScanOrc.cpp)
 
 target_link_libraries(
@@ -46,6 +57,32 @@ target_link_libraries(
   velox_exec_test_lib
   velox_hive_connector
   velox_memory)
+
+if(VELOX_ENABLE_HDFS)
+  add_executable(velox_scan_hdfs_orc ScanHdfsOrc.cpp)
+  target_link_libraries(
+    velox_scan_hdfs_orc
+    velox_file
+    velox_hdfs
+    velox_core
+    velox_type
+    velox_vector
+    velox_exec
+    velox_hive_connector
+    velox_memory)
+
+  add_executable(velox_selective_scan_orc SelectiveScanOrc.cpp)
+  target_link_libraries(
+    velox_selective_scan_orc
+    velox_file
+    velox_hdfs
+    velox_core
+    velox_type
+    velox_vector
+    velox_exec
+    velox_hive_connector
+    velox_memory)
+endif()
 
 add_executable(velox_example_vector_reader_writer VectorReaderWriter.cpp)
 

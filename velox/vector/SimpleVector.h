@@ -184,10 +184,17 @@ class SimpleVector : public BaseVector {
       return value ? "true" : "false";
     } else if constexpr (std::is_same_v<T, std::shared_ptr<void>>) {
       return "<opaque>";
-    } else if constexpr (
+    } else if constexpr (std::is_same_v<T, int32_t> ||
         std::is_same_v<T, int64_t> || std::is_same_v<T, int128_t>) {
       if (type()->isDecimal()) {
         return DecimalUtil::toString(value, type());
+      } else if (type()->isDate()) {
+        const time_t timeValue = value * 24 * 60 * 60;
+        struct tm tmValue;
+        gmtime_r(&timeValue, &tmValue);
+        char timeBuffer[11];
+        strftime(timeBuffer, sizeof(timeBuffer), "%Y-%m-%d", &tmValue);
+        return std::string(timeBuffer);
       } else {
         return velox::to<std::string>(value);
       }

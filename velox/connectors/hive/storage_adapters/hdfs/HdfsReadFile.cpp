@@ -15,6 +15,7 @@
  */
 
 #include "HdfsReadFile.h"
+#include "velox/common/testutil/StopWatch.h"
 #include <folly/synchronization/CallOnce.h>
 #include <hdfs/hdfs.h>
 
@@ -32,6 +33,10 @@ HdfsReadFile::HdfsReadFile(hdfsFS hdfs, const std::string_view path)
 
 void HdfsReadFile::preadInternal(uint64_t offset, uint64_t length, char* pos)
     const {
+#ifdef VELOX_ENABLE_TRACE
+  velox::common::testutil::StopWatch stopWatch(
+      velox::common::testutil::LatencyType::READ);
+#endif
   checkFileReadParameters(offset, length);
   auto file = hdfsOpenFile(hdfsClient_, filePath_.data(), O_RDONLY, 0, 0, 0);
   VELOX_CHECK_NOT_NULL(
