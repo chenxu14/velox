@@ -70,9 +70,14 @@ IntDecoder<isSigned>::skipVarintsInBuffer(uint64_t items) {
 }
 
 template <bool isSigned>
-FOLLY_ALWAYS_INLINE Int128 IntDecoder<isSigned>::readVInt128() {
-  Int128 value = 0;
-  Int128 work;
+FOLLY_ALWAYS_INLINE int128_t IntDecoder<isSigned>::readVsHugeInt() {
+  return ZigZag::decode<uint128_t>(readVuHugeInt());
+}
+
+template <bool isSigned>
+FOLLY_ALWAYS_INLINE uint128_t IntDecoder<isSigned>::readVuHugeInt() {
+  uint128_t value = 0;
+  uint128_t work;
   uint32_t offset = 0;
   signed char ch;
   while (true) {
@@ -204,16 +209,13 @@ template <typename T>
 T IntDecoder<isSigned>::readVInt() {
   if constexpr (isSigned) {
     if constexpr (std::is_same_v<T, int128_t>) {
-      Int128 value = readVInt128();
-      ZigZag::decodeInt128(value);
-      return value.toHugeInt();
+      return readVsHugeInt();
     } else {
       return readVsLong();
     }
   } else {
     if constexpr (std::is_same_v<T, int128_t>) {
-      Int128 value = readVInt128();
-      return value.toHugeInt();
+      return readVuHugeInt();
     } else {
       return readVuLong();
     }

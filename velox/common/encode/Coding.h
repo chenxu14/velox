@@ -25,11 +25,13 @@
 #include <folly/Likely.h>
 #include <algorithm>
 #include <utility>
-#include "velox/common/encode/Int128.h"
 #include "velox/common/encode/UInt128.h"
 #include "velox/common/strings/ByteStream.h"
 
 namespace facebook {
+
+using int128_t = __int128_t;
+using uint128_t = __uint128_t;
 
 // Variable-length integer encoding, using a little-endian, base-128
 // representation.
@@ -274,17 +276,9 @@ class ZigZag {
     return (static_cast<uint64_t>(val) << 1) ^ (val >> 63);
   }
 
-  static int64_t decode(uint64_t val) {
-    return static_cast<int64_t>((val >> 1) ^ -(val & 1));
-  }
-
-  static void decodeInt128(Int128& value) {
-    bool needsNegate = value.getLowBits() & 1;
-    value >>= 1;
-    if (needsNegate) {
-      value.negate();
-      value -= 1;
-    }
+  template <typename U, typename T = typename std::make_signed<U>::type>
+  static T decode(U val) {
+    return static_cast<T>((val >> 1) ^ -(val & 1));
   }
 };
 

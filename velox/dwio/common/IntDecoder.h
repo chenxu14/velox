@@ -20,7 +20,6 @@
 #include <folly/Range.h>
 #include <folly/Varint.h>
 #include "velox/common/encode/Coding.h"
-#include "velox/common/encode/Int128.h"
 #include "velox/dwio/common/IntCodecCommon.h"
 #include "velox/dwio/common/SeekableInputStream.h"
 #include "velox/dwio/common/StreamUtil.h"
@@ -175,7 +174,8 @@ class IntDecoder {
  private:
   uint64_t skipVarintsInBuffer(uint64_t items);
   void skipVarints(uint64_t items);
-  Int128 readVInt128();
+  int128_t readVsHugeInt();
+  uint128_t readVuHugeInt();
 
  protected:
   // note: there is opportunity for performance gains here by avoiding
@@ -312,7 +312,7 @@ FOLLY_ALWAYS_INLINE uint64_t IntDecoder<isSigned>::readVuLong() {
 
 template <bool isSigned>
 FOLLY_ALWAYS_INLINE int64_t IntDecoder<isSigned>::readVsLong() {
-  return ZigZag::decode(readVuLong());
+  return ZigZag::decode<uint64_t>(readVuLong());
 }
 
 template <bool isSigned>
