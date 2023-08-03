@@ -288,6 +288,10 @@ std::shared_ptr<const Type> ReaderBase::convertType(
     case TypeKind::TINYINT:
     case TypeKind::SMALLINT:
     case TypeKind::INTEGER:
+      if (type.format() == DwrfFormat::kOrc &&
+          type.getOrcPtr()->kind() == proto::orc::Type_Kind_DATE) {
+        return DATE();
+      }
     case TypeKind::BIGINT:
     case TypeKind::HUGEINT:
       if (type.format() == DwrfFormat::kOrc &&
